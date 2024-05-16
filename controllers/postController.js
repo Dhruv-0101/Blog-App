@@ -23,7 +23,7 @@ const createPost = asyncHandler(async (req, res) => {
 
   const postCreated = await Post.create({
     description,
-    // image: req.file,
+    image: req?.file?.path,
     userId: req.user,
     categoryId: category,
   });
@@ -94,7 +94,13 @@ const getPost = asyncHandler(async (req, res) => {
   const postId = req.params.postId;
   const userId = req.user;
 
-  const postFound = await Post.findByPk(postId);
+  // const postFound = await Post.findByPk(postId);
+  const postFound = await Post.findByPk(postId, {
+    include: {
+      model: User, 
+      attributes: ["username"], 
+    },
+  });
 
   if (!postFound) {
     throw new Error("Post not found");
