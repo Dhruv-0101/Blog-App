@@ -27,19 +27,12 @@ const createCategory = asyncHandler(async (req, res) => {
 });
 
 const fetchAllCategories = asyncHandler(async (req, res) => {
-  try {
-    const categories = await Category.findAll();
-    res.json({
-      status: "success",
-      message: "Categories fetched successfully",
-      categories,
-    });
-  } catch (error) {
-    res.status(500).json({
-      status: "error",
-      message: error.message,
-    });
-  }
+  const categories = await Category.findAll();
+  res.json({
+    status: "success",
+    message: "Categories fetched successfully",
+    categories,
+  });
 });
 
 const getCategory = asyncHandler(async (req, res) => {

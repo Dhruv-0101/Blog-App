@@ -10,7 +10,7 @@ CategoryRouter.post(
 );
 CategoryRouter.get(
   "/get-all-category",
-  isAuthenticated,
+  // isAuthenticated,
   categoryController.fetchAllCategories
 );
 CategoryRouter.get(
