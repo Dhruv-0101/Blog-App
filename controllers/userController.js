@@ -47,7 +47,8 @@ const login = asyncHandler(async (req, res, next) => {
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET);
 
     // Send the response with token
-    res.cookie("token", token, {
+    res
+      .cookie("token", token, {
         httpOnly: true,
         secure: false,
         sameSite: "strict",
@@ -107,13 +108,13 @@ const googleAuthCallback = asyncHandler(async (req, res, next) => {
 
 const checkAuthenticated = async (req, res) => {
   const token = req.cookies["token"];
-  console.log(token)
+  console.log(token);
   if (!token) {
     return res.status(401).json({ isAuthenticated: false });
   }
 
   const decoded = jwt.verify(token, process.env.JWT_SECRET);
-  console.log(decoded)
+  console.log(decoded);
   // Find the user
   const user = await User.findByPk(decoded.id);
   if (!user) {
@@ -128,10 +129,33 @@ const checkAuthenticated = async (req, res) => {
   }
 };
 
+const profile = async (req, res) => {
+  const userId = req.user;
+  const user = await User.findByPk(userId, {
+    include: [{ model: User }],
+    attributes: {
+      exclude: [
+        "password",
+        "passwordResetToken",
+        "accountVerificationToken",
+        "accountVerificationExpires",
+        "passwordResetExpires",
+      ],
+    },
+  });
+
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  res.json({ user });
+};
+
 module.exports = {
   registerUserCtrl,
   login,
   googleAuthMiddleware,
   googleAuthCallback,
   checkAuthenticated,
+  profile,
 };
