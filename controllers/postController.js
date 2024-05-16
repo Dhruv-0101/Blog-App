@@ -7,6 +7,7 @@ const Category = db.categories;
 const User = db.users;
 const PostViewers = db.postviewers;
 const Comment = db.comments;
+const LikeDisLike = db.likedislike;
 
 const createPost = asyncHandler(async (req, res) => {
   const { description, category } = req.body;
@@ -97,8 +98,8 @@ const getPost = asyncHandler(async (req, res) => {
   // const postFound = await Post.findByPk(postId);
   const postFound = await Post.findByPk(postId, {
     include: {
-      model: User, 
-      attributes: ["username"], 
+      model: User,
+      attributes: ["username"],
     },
   });
 
@@ -173,4 +174,122 @@ const deletePost = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { createPost, fetchAllPosts, getPost, deletePost };
+const likePost = asyncHandler(async (req, res) => {
+  const userId = req.user;
+  const postId = req.params.postId;
+
+  // Check if there is an existing like for the user and post
+  let existingLike = await LikeDisLike.findOne({
+    where: { userId, postId },
+  });
+
+  // If there is an existing like, return success message
+  if (existingLike && existingLike.liked) {
+    const likeCount = await LikeDisLike.count({
+      where: { postId: postId, liked: true },
+    });
+    return res
+      .status(400)
+      .json({ likeCount: likeCount, message: "User already liked the post" });
+  }
+
+  // If no existing like found, create a new entry with 'liked' set to true
+  if (!existingLike) {
+    existingLike = await LikeDisLike.create({ userId, postId, liked: true });
+  } else {
+    // Update the existing entry to set 'liked' to true
+    existingLike.liked = true;
+    await existingLike.save();
+  }
+
+  // Count the number of likes after creating or updating the like entry
+  const likeCount = await LikeDisLike.count({
+    where: { postId: postId, liked: true },
+  });
+
+  res.status(201).json({
+    likeCount: likeCount,
+    message: "Post liked successfully",
+  });
+});
+
+const dislikePost = asyncHandler(async (req, res) => {
+  const userId = req.user;
+  const postId = req.params.postId;
+
+  // Check if there is an existing dislike for the user and post
+  let existingDislike = await LikeDisLike.findOne({
+    where: { userId, postId },
+  });
+
+  // If there is an existing dislike, return success message
+  if (existingDislike && !existingDislike.liked) {
+    const dislikeCount = await LikeDisLike.count({
+      where: { postId: postId, liked: false },
+    });
+    return res.status(400).json({
+      dislikeCount: dislikeCount,
+      message: "User already disliked the post",
+    });
+  }
+
+  // If no existing dislike found, create a new entry with 'liked' set to false
+  if (!existingDislike) {
+    existingDislike = await LikeDisLike.create({
+      userId,
+      postId,
+      liked: false,
+    });
+  } else {
+    // Update the existing entry to set 'liked' to false
+    existingDislike.liked = false;
+    await existingDislike.save();
+  }
+
+  // Count the number of dislikes after creating or updating the dislike entry
+  const dislikeCount = await LikeDisLike.count({
+    where: { postId: postId, liked: false },
+  });
+
+  res.status(201).json({
+    dislikeCount: dislikeCount,
+    message: "Post disliked successfully",
+  });
+});
+
+const getLikesCount = asyncHandler(async (req, res) => {
+  const postId = req.params.postId;
+
+  const likesCount = await LikeDisLike.count({
+    where: { postId: postId, liked: true },
+  });
+
+  res.status(200).json({
+    likesCount: likesCount,
+    message: "Likes count fetched successfully",
+  });
+});
+
+const GetDisLikeCount = asyncHandler(async (req, res) => {
+  const postId = req.params.postId;
+
+  const dislikesCount = await LikeDisLike.count({
+    where: { postId: postId, liked: false },
+  });
+
+  res.status(200).json({
+    dislikesCount: dislikesCount,
+    message: "Likes count fetched successfully",
+  });
+});
+
+module.exports = {
+  createPost,
+  fetchAllPosts,
+  getPost,
+  deletePost,
+  likePost,
+  dislikePost,
+  getLikesCount,
+  GetDisLikeCount,
+};

@@ -21,5 +21,19 @@ PostRouter.delete(
   isAuthenticated,
   PostController.deletePost
 );
+PostRouter.post("/like-post/:postId", isAuthenticated, PostController.likePost);
+PostRouter.post(
+  "/dislike-post/:postId",
+  isAuthenticated,
+  PostController.dislikePost
+);
+PostRouter.get(
+  "/like-count/:postId",
+  PostController.getLikesCount
+);
+PostRouter.get(
+  "/dislike-count/:postId",
+  PostController.GetDisLikeCount
+);
 
 module.exports = PostRouter;

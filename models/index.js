@@ -37,6 +37,7 @@ db.posts = require("./Post/Post.js")(sequelize, DataTypes);
 db.comments = require("./Comments/Comments.js")(sequelize, DataTypes);
 db.plans = require("./Plan/Plan.js")(sequelize, DataTypes);
 db.postviewers = require("./PostViewers/PostViewers.js")(sequelize, DataTypes);
+db.likedislike = require("./LikeDisLike/LikeDisLike.js")(sequelize, DataTypes);
 
 db.sequelize.sync({ force: false }).then(() => {
   console.log("yes re-sync done!");
@@ -85,5 +86,11 @@ db.posts.belongsToMany(
   { through: db.postviewers },
   { onDelete: "CASCADE" }
 );
+
+db.users.hasMany(db.likedislike);
+db.likedislike.belongsTo(db.users);
+
+db.posts.hasMany(db.likedislike);
+db.likedislike.belongsTo(db.users);
 
 module.exports = db;
