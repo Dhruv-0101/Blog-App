@@ -210,6 +210,13 @@ const checkFollowing = async (req, res) => {
     .json({ data: userId, following: isUserFollowing, message: "success" });
 };
 
+const logout = asyncHandler(async (req, res) => {
+  // Clear the token cookie
+  res.cookie("token", "", { maxAge: 1 });
+
+  res.status(200).json({ message: "Logout success" });
+});
+
 module.exports = {
   registerUserCtrl,
   login,
@@ -220,4 +227,5 @@ module.exports = {
   followUser,
   unfollowUser,
   checkFollowing,
+  logout,
 };

@@ -24,5 +24,6 @@ UserRouter.get(
   isAuthenticated,
   userController.checkFollowing
 );
+UserRouter.post("/logout", isAuthenticated, userController.logout);
 
 module.exports = UserRouter;
