@@ -25,5 +25,15 @@ UserRouter.get(
   userController.checkFollowing
 );
 UserRouter.post("/logout", isAuthenticated, userController.logout);
+UserRouter.post(
+  "/email-verify",
+  isAuthenticated,
+  userController.verifyEmailAccount
+);
+UserRouter.post(
+  "/email-verification/:verifyToken",
+  isAuthenticated,
+  userController.verifyEmailAcc
+);
 
 module.exports = UserRouter;

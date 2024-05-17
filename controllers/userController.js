@@ -7,6 +7,9 @@ const asyncHandler = require("express-async-handler");
 const crypto = require("crypto");
 const passport = require("passport");
 const FollowUnfollow = db.followunfollow;
+const { Op } = require("sequelize"); // Import Op from sequelize
+
+const sendAccVerificationEmail = require("../utils/sendAccVerificationEmail");
 
 const registerUserCtrl = asyncHandler(async (req, res) => {
   const { username, email, password } = req.body;
@@ -217,6 +220,69 @@ const logout = asyncHandler(async (req, res) => {
   res.status(200).json({ message: "Logout success" });
 });
 
+const verifyEmailAccount = asyncHandler(async (req, res) => {
+  // Find the logged-in user
+  const userId = req.user;
+  const user = await User.findByPk(userId);
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found, please login");
+  }
+
+  // Check if user email exists
+  if (!user.email) {
+    res.status(400);
+    throw new Error("Email not found");
+  }
+
+  // Use the method from the model
+  const token = await user.generateAccVerificationToken();
+
+  // Save changes to the user instance
+  await user.save();
+
+  // Send the email
+  sendAccVerificationEmail(user.email, token);
+
+  res.json({
+    message: `Account verification email sent to ${user.email}. Token expires in 10 minutes`,
+  });
+});
+
+const verifyEmailAcc = asyncHandler(async (req, res) => {
+  // Get the token
+  const verifyToken = req.params.verifyToken;
+
+  // Convert the token to actual token that has been saved in our db
+  const cryptoToken = crypto
+    .createHash("sha256")
+    .update(verifyToken)
+    .digest("hex");
+
+  // Find the user
+  const userFound = await User.findOne({
+    where: {
+      accountVerificationToken: cryptoToken,
+      // accountVerificationExpires: {
+      //   [Op.gt]: new Date(),
+      // },
+    },
+  });
+
+  if (!userFound) {
+    throw new Error("Account verification expires");
+  }
+
+  // Update the user field
+  userFound.isEmailVerified = true;
+  userFound.accountVerificationToken = null;
+  userFound.accountVerificationExpires = null;
+
+  // Resave the user
+  await userFound.save();
+
+  res.json({ message: "Account successfully verified" });
+});
 module.exports = {
   registerUserCtrl,
   login,
@@ -228,4 +294,6 @@ module.exports = {
   unfollowUser,
   checkFollowing,
   logout,
+  verifyEmailAccount,
+  verifyEmailAcc,
 };
