@@ -38,6 +38,10 @@ db.comments = require("./Comments/Comments.js")(sequelize, DataTypes);
 db.plans = require("./Plan/Plan.js")(sequelize, DataTypes);
 db.postviewers = require("./PostViewers/PostViewers.js")(sequelize, DataTypes);
 db.likedislike = require("./LikeDisLike/LikeDisLike.js")(sequelize, DataTypes);
+db.followunfollow = require("./Follow-Unfollow/Follow-Unfollow.js")(
+  sequelize,
+  DataTypes
+);
 
 db.sequelize.sync({ force: false }).then(() => {
   console.log("yes re-sync done!");
@@ -92,5 +96,19 @@ db.likedislike.belongsTo(db.users);
 
 db.posts.hasMany(db.likedislike);
 db.likedislike.belongsTo(db.users);
+
+db.users.belongsToMany(db.users, {
+  through: db.followunfollow,
+  as: "followers",
+  foreignKey: "userId",
+  otherKey: "followerId",
+});
+
+db.users.belongsToMany(db.users, {
+  through: db.followunfollow,
+  as: "following",
+  foreignKey: "followerId",
+  otherKey: "userId",
+});
 
 module.exports = db;

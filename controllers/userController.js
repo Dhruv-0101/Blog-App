@@ -6,6 +6,7 @@ const jwt = require("jsonwebtoken");
 const asyncHandler = require("express-async-handler");
 const crypto = require("crypto");
 const passport = require("passport");
+const FollowUnfollow = db.followunfollow;
 
 const registerUserCtrl = asyncHandler(async (req, res) => {
   const { username, email, password } = req.body;
@@ -151,6 +152,64 @@ const profile = async (req, res) => {
   res.json({ user });
 };
 
+const followUser = asyncHandler(async (req, res) => {
+  const userId = req.user;
+  const followerId = req.params.followerId;
+
+  if (userId === followerId) {
+    res.status(400).json({ message: "You cannot follow yourself" });
+  }
+
+  // Check if already following
+  const existingFollow = await FollowUnfollow.findOne({
+    where: { userId, followerId },
+  });
+
+  if (existingFollow) {
+    res.status(200).json({ message: "You are already following this user" });
+  }
+
+  await FollowUnfollow.create({ userId, followerId });
+  res.status(201).json({ message: "Followed successfully" });
+});
+
+const unfollowUser = async (req, res) => {
+  const userId = req.user;
+  const followerId = req.params.followerId;
+
+  const existingFollow = await FollowUnfollow.findOne({
+    where: { userId, followerId },
+  });
+  if (!existingFollow) {
+    return res.status(400).json({ message: "You are not following this user" });
+  }
+
+  // If the relationship exists, delete it
+  await FollowUnfollow.destroy({ where: { userId, followerId } });
+
+  res.status(200).json({ message: "Unfollowed successfully" });
+};
+
+const isFollowing = async (userId, followerId) => {
+  // Check if the follow relationship exists
+  const existingFollow = await FollowUnfollow.findOne({
+    where: { userId, followerId },
+  });
+  return !!existingFollow; // Return true if a record is found, false otherwise
+};
+
+const checkFollowing = async (req, res) => {
+  const userId = req.user;
+  const followerId = req?.params?.followerId;
+  console.log(followerId);
+
+  // Check if the user is following the specified follower
+  const isUserFollowing = await isFollowing(userId, followerId);
+  res
+    .status(200)
+    .json({ data: userId, following: isUserFollowing, message: "success" });
+};
+
 module.exports = {
   registerUserCtrl,
   login,
@@ -158,4 +217,7 @@ module.exports = {
   googleAuthCallback,
   checkAuthenticated,
   profile,
+  followUser,
+  unfollowUser,
+  checkFollowing,
 };

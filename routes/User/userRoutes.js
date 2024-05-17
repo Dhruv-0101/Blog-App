@@ -9,5 +9,20 @@ UserRouter.get("/auth/google", userController.googleAuthMiddleware);
 UserRouter.get("/auth/google/callback", userController.googleAuthCallback);
 UserRouter.get("/checkAuthenticated", userController.checkAuthenticated);
 UserRouter.get("/profile", isAuthenticated, userController.profile);
+UserRouter.post(
+  "/follow-user/:followerId",
+  isAuthenticated,
+  userController.followUser
+);
+UserRouter.post(
+  "/unfollow-user/:followerId",
+  isAuthenticated,
+  userController.unfollowUser
+);
+UserRouter.get(
+  "/get-user-follow/:followerId",
+  isAuthenticated,
+  userController.checkFollowing
+);
 
 module.exports = UserRouter;
