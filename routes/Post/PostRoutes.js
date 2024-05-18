@@ -1,12 +1,14 @@
 const PostController = require("../../controllers/postController");
 const isAuthenticated = require("../../middleware/isAuthenticated");
 const postimageupload = require("../../config/PostImageConfig");
+const isAccountVerified = require("../../middleware/isAccountVerified");
 
 const PostRouter = require("express").Router();
 
 PostRouter.post(
   "/create-post",
   isAuthenticated,
+  isAccountVerified,
   postimageupload.single("image"),
   PostController.createPost
 );
@@ -27,13 +29,7 @@ PostRouter.post(
   isAuthenticated,
   PostController.dislikePost
 );
-PostRouter.get(
-  "/like-count/:postId",
-  PostController.getLikesCount
-);
-PostRouter.get(
-  "/dislike-count/:postId",
-  PostController.GetDisLikeCount
-);
+PostRouter.get("/like-count/:postId", PostController.getLikesCount);
+PostRouter.get("/dislike-count/:postId", PostController.GetDisLikeCount);
 
 module.exports = PostRouter;
