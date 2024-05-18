@@ -10,6 +10,7 @@ const FollowUnfollow = db.followunfollow;
 const { Op } = require("sequelize"); // Import Op from sequelize
 
 const sendAccVerificationEmail = require("../utils/sendAccVerificationEmail");
+const sendPasswordEmail = require("../utils/sendPasswordEmail");
 
 const registerUserCtrl = asyncHandler(async (req, res) => {
   const { username, email, password } = req.body;
@@ -330,6 +331,67 @@ const verifyEmailAcc = asyncHandler(async (req, res) => {
   res.json({ message: "Account successfully verified" });
 });
 
+const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  // Find the user by email
+  const user = await User.findOne({ where: { email } });
+  if (!user) {
+    throw new Error(`User with email ${email} is not found in our database`);
+  }
+
+  // Check if user registered with a social login
+  if (user.authMethod !== "local") {
+    throw new Error("Please login with your social account");
+  }
+
+  // Generate a password reset token
+  const token = await user.generatePasswordResetToken();
+
+  // Save the updated user
+  await user.save();
+
+  // Send the password reset email
+  sendPasswordEmail(user.email, token);
+
+  res.json({
+    message: `Password reset email sent to ${email}`,
+  });
+});
+
+const resetPassword = asyncHandler(async (req, res) => {
+  const verifyToken = req.params.verifyToken;
+  const { password } = req.body;
+
+  const cryptoToken = crypto
+    .createHash("sha256")
+    .update(verifyToken)
+    .digest("hex");
+
+  const userFound = await User.findOne({
+    where: {
+      passwordResetToken: cryptoToken,
+      passwordResetExpires: { [Op.gt]: Date.now() },
+    },
+  });
+
+  if (!userFound) {
+    throw new Error("Password reset token is invalid or has expired");
+  }
+
+  // Hash the new password
+  const salt = await bcrypt.genSalt(10);
+  userFound.password = await bcrypt.hash(password, salt);
+  userFound.passwordResetToken = null;
+  userFound.passwordResetExpires = null;
+
+  // Save the updated user data
+  await userFound.save();
+
+  // Send a success response
+  res.json({ message: "Password successfully reset" });
+});
+
 module.exports = {
   registerUserCtrl,
   login,
@@ -343,4 +405,6 @@ module.exports = {
   logout,
   verifyEmailAccount,
   verifyEmailAcc,
+  forgotPassword,
+  resetPassword,
 };

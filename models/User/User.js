@@ -87,20 +87,20 @@ module.exports = (sequelize, DataTypes) => {
       .createHash("sha256")
       .update(emailToken)
       .digest("hex");
-    this.accountVerificationExpires = new Date(Date.now() + 1 * 60 * 1000); // 10 minutes
+    this.accountVerificationExpires = new Date(Date.now() + 1 * 60 * 1000); // 1 minutes
 
     return emailToken;
   };
 
-  //   User.generatePasswordResetToken = function () {
-  //     const emailToken = crypto.randomBytes(20).toString("hex");
-  //     this.passwordResetToken = crypto
-  //       .createHash("sha256")
-  //       .update(emailToken)
-  //       .digest("hex");
-  //     this.passwordResetExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-  //     return emailToken;
-  //   };
+  User.prototype.generatePasswordResetToken = function () {
+    const emailToken = crypto.randomBytes(20).toString("hex");
+    this.passwordResetToken = crypto
+      .createHash("sha256")
+      .update(emailToken)
+      .digest("hex");
+    this.passwordResetExpires = new Date(Date.now() + 1 * 60 * 1000); // 1 minutes
+    return emailToken;
+  };
 
   return User;
 };
