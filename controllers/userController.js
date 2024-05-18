@@ -491,6 +491,25 @@ const GetFollowers = async (req, res) => {
   res.status(200).json({ followers: user.following });
 };
 
+const getFollowingByUserId = async (req, res) => {
+  const userId = req.user;
+
+  const user = await User.findByPk(userId, {
+    include: {
+      model: User,
+      as: "followers",
+      attributes: ["id", "username", "profilePicture", "email"],
+      through: { attributes: [] },
+    },
+  });
+
+  if (!user) {
+    return res.status(404).json({ error: "User not found" });
+  }
+
+  res.status(200).json({ following: user.followers });
+};
+
 module.exports = {
   registerUserCtrl,
   login,
@@ -509,4 +528,5 @@ module.exports = {
   updateProfilePic,
   updateEmail,
   GetFollowers,
+  getFollowingByUserId,
 };

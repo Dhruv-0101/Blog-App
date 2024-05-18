@@ -46,5 +46,10 @@ UserRouter.put(
 );
 UserRouter.put("/update-email", isAuthenticated, userController.updateEmail);
 UserRouter.get("/get-followers", isAuthenticated, userController.GetFollowers);
+UserRouter.get(
+  "/get-following",
+  isAuthenticated,
+  userController.getFollowingByUserId
+);
 
 module.exports = UserRouter;
