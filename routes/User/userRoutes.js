@@ -45,5 +45,6 @@ UserRouter.put(
   userController.updateProfilePic
 );
 UserRouter.put("/update-email", isAuthenticated, userController.updateEmail);
+UserRouter.get("/get-followers", isAuthenticated, userController.GetFollowers);
 
 module.exports = UserRouter;
