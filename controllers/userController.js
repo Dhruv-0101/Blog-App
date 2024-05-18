@@ -392,6 +392,24 @@ const resetPassword = asyncHandler(async (req, res) => {
   res.json({ message: "Password successfully reset" });
 });
 
+const updateProfilePic = asyncHandler(async (req, res) => {
+  const userId = req.user;
+
+  const [updatedRowsCount] = await User.update(
+    { profilePicture: req.file.path },
+    { where: { id: userId } }
+  );
+
+  if (updatedRowsCount === 0) {
+    throw new Error("User not found or profile picture not updated");
+  }
+
+  // Send the success response
+  res.json({
+    message: "Profile picture updated successfully",
+  });
+});
+
 module.exports = {
   registerUserCtrl,
   login,
@@ -407,4 +425,5 @@ module.exports = {
   verifyEmailAcc,
   forgotPassword,
   resetPassword,
+  updateProfilePic,
 };

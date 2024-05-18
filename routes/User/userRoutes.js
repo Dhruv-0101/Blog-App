@@ -1,5 +1,6 @@
 const userController = require("../../controllers/userController");
 const isAuthenticated = require("../../middleware/isAuthenticated");
+const profileimageupload = require("../../config/ProfileImageConfig");
 
 const UserRouter = require("express").Router();
 
@@ -37,4 +38,11 @@ UserRouter.post(
 );
 UserRouter.post("/resetpssword-email", userController.forgotPassword);
 UserRouter.post("/password-reset/:verifyToken", userController.resetPassword);
+UserRouter.put(
+  "/upload-profilephoto",
+  profileimageupload.single("image"),
+  isAuthenticated,
+  userController.updateProfilePic
+);
+
 module.exports = UserRouter;
