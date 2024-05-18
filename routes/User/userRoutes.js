@@ -44,5 +44,6 @@ UserRouter.put(
   isAuthenticated,
   userController.updateProfilePic
 );
+UserRouter.put("/update-email", isAuthenticated, userController.updateEmail);
 
 module.exports = UserRouter;

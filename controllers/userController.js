@@ -410,6 +410,34 @@ const updateProfilePic = asyncHandler(async (req, res) => {
   });
 });
 
+const updateEmail = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  const userId = req.user;
+
+  const user = await User.findByPk(userId);
+
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  user.email = email;
+  user.isEmailVerified = false;
+
+  await user.save();
+
+  const token = await user.generateAccVerificationToken();
+
+  // Send the verification email
+  sendAccVerificationEmail(user.email, token);
+
+  await user.save();
+
+  // Send the response
+  res.json({
+    message: `Account verification email sent to ${user.email}, token expires in 10 minutes`,
+  });
+});
+
 module.exports = {
   registerUserCtrl,
   login,
@@ -426,4 +454,5 @@ module.exports = {
   forgotPassword,
   resetPassword,
   updateProfilePic,
+  updateEmail,
 };
