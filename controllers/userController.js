@@ -249,40 +249,87 @@ const verifyEmailAccount = asyncHandler(async (req, res) => {
   });
 });
 
+// const verifyEmailAcc = asyncHandler(async (req, res) => {
+//   // Get the token
+//   const verifyToken = req.params.verifyToken;
+
+//   // Convert the token to actual token that has been saved in our db
+//   const cryptoToken = crypto
+//     .createHash("sha256")
+//     .update(verifyToken)
+//     .digest("hex");
+
+//   // Find the user
+//   const userFound = await User.findOne({
+//     where: {
+//       accountVerificationToken: cryptoToken,
+//       // accountVerificationExpires: {
+//       //   [Op.gt]: new Date(),
+//       // },
+//     },
+//   });
+
+//   if (!userFound) {
+//     throw new Error("Account verification expires");
+//   }
+
+//   // Update the user field
+//   userFound.isEmailVerified = true;
+//   userFound.accountVerificationToken = null;
+//   userFound.accountVerificationExpires = null;
+
+//   // Resave the user
+//   await userFound.save();
+
+//   res.json({ message: "Account successfully verified" });
+// });
 const verifyEmailAcc = asyncHandler(async (req, res) => {
-  // Get the token
+  // Get the user ID from the request parameters
+  const userId = req.user;
+  // Get the token from the request parameters
   const verifyToken = req.params.verifyToken;
 
-  // Convert the token to actual token that has been saved in our db
+  // Find the user by the user ID
+  const userFound = await User.findByPk(userId);
+
+  // If the user is not found, handle it gracefully
+  if (!userFound) {
+    return res.status(400).json({ message: "User not found" });
+  }
+
+  // If the user's email is already verified, send a success response
+  if (userFound.isEmailVerified) {
+    return res.json({ message: "Account already verified" });
+  }
+
+  // Convert the token to the format saved in the database
   const cryptoToken = crypto
     .createHash("sha256")
     .update(verifyToken)
     .digest("hex");
 
-  // Find the user
-  const userFound = await User.findOne({
-    where: {
-      accountVerificationToken: cryptoToken,
-      // accountVerificationExpires: {
-      //   [Op.gt]: new Date(),
-      // },
-    },
-  });
-
-  if (!userFound) {
-    throw new Error("Account verification expires");
+  // Check if the token matches the saved token and is not expired
+  if (
+    userFound.accountVerificationToken !== cryptoToken ||
+    userFound.accountVerificationExpires < new Date()
+  ) {
+    return res.status(400).json({
+      message: "Account verification token is invalid or has expired",
+    });
   }
 
-  // Update the user field
+  // Update the user's verification status
   userFound.isEmailVerified = true;
   userFound.accountVerificationToken = null;
   userFound.accountVerificationExpires = null;
 
-  // Resave the user
+  // Save the updated user data
   await userFound.save();
 
+  // Send a success response
   res.json({ message: "Account successfully verified" });
 });
+
 module.exports = {
   registerUserCtrl,
   login,
