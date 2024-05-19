@@ -2,6 +2,7 @@ const PostController = require("../../controllers/postController");
 const isAuthenticated = require("../../middleware/isAuthenticated");
 const postimageupload = require("../../config/PostImageConfig");
 const isAccountVerified = require("../../middleware/isAccountVerified");
+const checkUserPlan = require("../../middleware/checkUserPlan");
 
 const PostRouter = require("express").Router();
 
@@ -9,6 +10,7 @@ PostRouter.post(
   "/create-post",
   isAuthenticated,
   isAccountVerified,
+  checkUserPlan,
   postimageupload.single("image"),
   PostController.createPost
 );
