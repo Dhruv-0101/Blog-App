@@ -42,6 +42,7 @@ db.followunfollow = require("./Follow-Unfollow/Follow-Unfollow.js")(
   sequelize,
   DataTypes
 );
+db.payments = require("./Payment/Payment.js")(sequelize, DataTypes);
 
 db.sequelize.sync({ force: false }).then(() => {
   console.log("yes re-sync done!");
@@ -110,5 +111,11 @@ db.users.belongsToMany(db.users, {
   foreignKey: "followerId",
   otherKey: "userId",
 });
+
+db.plans.hasMany(db.payments);
+db.payments.belongsTo(db.plans);
+
+db.users.hasMany(db.payments);
+db.payments.belongsTo(db.users);
 
 module.exports = db;
