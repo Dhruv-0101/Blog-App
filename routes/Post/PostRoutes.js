@@ -33,5 +33,10 @@ PostRouter.post(
 );
 PostRouter.get("/like-count/:postId", PostController.getLikesCount);
 PostRouter.get("/dislike-count/:postId", PostController.GetDisLikeCount);
+PostRouter.get(
+  "/my-posts",
+  isAuthenticated,
+  PostController.getUserPostsController
+);
 
 module.exports = PostRouter;
