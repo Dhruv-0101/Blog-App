@@ -51,5 +51,15 @@ UserRouter.get(
   isAuthenticated,
   userController.getFollowingByUserId
 );
+UserRouter.get(
+  "/get-followers-dashboard-count",
+  isAuthenticated,
+  userController.getFollowersCount
+);
+UserRouter.get(
+  "/get-followings-dashboard-count",
+  isAuthenticated,
+  userController.getFollowingsCount
+);
 
 module.exports = UserRouter;

@@ -510,6 +510,29 @@ const getFollowingByUserId = async (req, res) => {
   res.status(200).json({ following: user.followers });
 };
 
+const getFollowersCount = asyncHandler(async (req, res) => {
+  const userId = req.user;
+
+  // Count followers for the given user
+  const followersCount = await FollowUnfollow.count({
+    where: { followerId: userId },
+  });
+
+  // Return the count of followers
+  return res.status(200).json({ followersCount });
+});
+const getFollowingsCount = asyncHandler(async (req, res) => {
+  const userId = req.user;
+
+  // Count followers for the given user
+  const followersCount = await FollowUnfollow.count({
+    where: { userId: userId },
+  });
+
+  // Return the count of followers
+  return res.status(200).json({ followersCount: followersCount });
+});
+
 module.exports = {
   registerUserCtrl,
   login,
@@ -529,4 +552,6 @@ module.exports = {
   updateEmail,
   GetFollowers,
   getFollowingByUserId,
+  getFollowersCount,
+  getFollowingsCount,
 };
