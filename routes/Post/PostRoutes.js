@@ -48,5 +48,14 @@ PostRouter.get(
   isAuthenticated,
   PostController.getUserPostsCount
 );
-
+PostRouter.get(
+  "/my-posts-like",
+  isAuthenticated,
+  PostController.getUserPostLikes
+);
+PostRouter.get(
+  "/my-posts-dislike",
+  isAuthenticated,
+  PostController.getUserPostDisLikes
+);
 module.exports = PostRouter;

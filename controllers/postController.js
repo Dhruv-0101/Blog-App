@@ -341,6 +341,100 @@ const getUserPostsCount = asyncHandler(async (req, res) => {
   return res.status(200).json({ postsCount });
 });
 
+// const getUserPostLikes = asyncHandler(async (req, res) => {
+//   const userId = req.user;
+
+//   // Find all posts for the user
+//   const userPosts = await Post.findAll({ where: { userId: userId } });
+
+//   // If user has no posts, return 404
+//   if (!userPosts || userPosts.length === 0) {
+//     return res
+//       .status(404)
+//       .json({ message: "User not found or user has no posts" });
+//   }
+
+//   // Initialize an array to store likes count for each post
+//   const postsWithLikeCount = [];
+
+//   // Iterate over each post to count likes
+//   for (const post of userPosts) {
+//     // Find likes count for current post where liked is true
+//     const postLikesCount = await LikeDisLike.count({
+//       where: { postId: post.id, liked: true },
+//     });
+
+//     // Add the post and its like count to the array
+//     postsWithLikeCount.push({
+//       postId: post.id,
+//       likesCount: postLikesCount,
+//     });
+//   }
+
+//   // Return the array of posts with like counts
+//   return res.status(200).json({ posts: postsWithLikeCount });
+// });
+const getUserPostLikes = asyncHandler(async (req, res) => {
+  const userId = req.user;
+
+  // Find all posts for the user
+  const userPosts = await Post.findAll({ where: { userId: userId } });
+
+  // If user has no posts, return 404
+  if (!userPosts || userPosts.length === 0) {
+    return res
+      .status(404)
+      .json({ message: "User not found or user has no posts" });
+  }
+
+  // Initialize total likes count
+  let totalLikesCount = 0;
+
+  // Iterate over each post to count likes
+  for (const post of userPosts) {
+    // Find likes count for current post where liked is true
+    const postLikesCount = await LikeDisLike.count({
+      where: { postId: post.id, liked: true },
+    });
+
+    // Add the current post likes count to total likes count
+    totalLikesCount += postLikesCount;
+  }
+
+  // Return the total likes count for the user's posts
+  return res.status(200).json({ totalLikesCount });
+});
+const getUserPostDisLikes = asyncHandler(async (req, res) => {
+  const userId = req.user;
+
+  // Find all posts for the user
+  const userPosts = await Post.findAll({ where: { userId: userId } });
+
+  // If user has no posts, return 404
+  if (!userPosts || userPosts.length === 0) {
+    return res
+      .status(404)
+      .json({ message: "User not found or user has no posts" });
+  }
+
+  // Initialize total likes count
+  let totalLikesCount = 0;
+
+  // Iterate over each post to count likes
+  for (const post of userPosts) {
+    // Find likes count for current post where liked is true
+    const postLikesCount = await LikeDisLike.count({
+      where: { postId: post.id, liked: false },
+    });
+
+    // Add the current post likes count to total likes count
+    totalLikesCount += postLikesCount;
+  }
+
+  // Return the total likes count for the user's posts
+  return res.status(200).json({ totalDisLikesCount: totalLikesCount });
+});
+
 module.exports = {
   createPost,
   fetchAllPosts,
@@ -353,4 +447,6 @@ module.exports = {
   getUserPostsController,
   getTotalPostViews,
   getUserPostsCount,
+  getUserPostLikes,
+  getUserPostDisLikes,
 };
