@@ -329,6 +329,18 @@ const getTotalPostViews = asyncHandler(async (req, res) => {
   return res.status(200).json({ totalUserViews });
 });
 
+const getUserPostsCount = asyncHandler(async (req, res) => {
+  const userId = req.user;
+
+  // Count posts for the given user
+  const postsCount = await Post.count({
+    where: { userId: userId },
+  });
+
+  // Return the count of posts
+  return res.status(200).json({ postsCount });
+});
+
 module.exports = {
   createPost,
   fetchAllPosts,
@@ -340,4 +352,5 @@ module.exports = {
   GetDisLikeCount,
   getUserPostsController,
   getTotalPostViews,
+  getUserPostsCount,
 };

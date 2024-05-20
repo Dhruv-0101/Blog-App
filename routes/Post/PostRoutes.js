@@ -43,5 +43,10 @@ PostRouter.get(
   isAuthenticated,
   PostController.getTotalPostViews
 );
+PostRouter.get(
+  "/my-posts-count",
+  isAuthenticated,
+  PostController.getUserPostsCount
+);
 
 module.exports = PostRouter;
