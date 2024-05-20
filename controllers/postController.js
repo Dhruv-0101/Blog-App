@@ -297,6 +297,38 @@ const getUserPostsController = async (req, res) => {
   return res.status(200).json({ userPosts });
 };
 
+const getTotalPostViews = asyncHandler(async (req, res) => {
+  const userId = req.user;
+
+  // Find all posts for the user
+  const userPosts = await Post.findAll({ where: { userId: userId } });
+  console.log(userPosts);
+
+  // If user has no posts
+  if (!userPosts || userPosts.length === 0) {
+    return res
+      .status(404)
+      .json({ message: "User not found or user has no posts" });
+  }
+
+  // Initialize total views count
+  let totalUserViews = 0;
+
+  // Iterate over each post to count views
+  for (const post of userPosts) {
+    // Find views count for current post
+    const postViewsCount = await PostViewers.count({
+      where: { postId: post.id },
+    });
+    console.log(postViewsCount);
+    // Add current post views count to total views
+    totalUserViews += postViewsCount;
+  }
+
+  // Return the total number of views for all the user's posts
+  return res.status(200).json({ totalUserViews });
+});
+
 module.exports = {
   createPost,
   fetchAllPosts,
@@ -307,4 +339,5 @@ module.exports = {
   getLikesCount,
   GetDisLikeCount,
   getUserPostsController,
+  getTotalPostViews,
 };
