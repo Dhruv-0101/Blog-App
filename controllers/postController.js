@@ -8,6 +8,7 @@ const User = db.users;
 const PostViewers = db.postviewers;
 const Comment = db.comments;
 const LikeDisLike = db.likedislike;
+const PostViewer = db.postviewers;
 
 const createPost = asyncHandler(async (req, res) => {
   const { description, category } = req.body;
@@ -435,6 +436,120 @@ const getUserPostDisLikes = asyncHandler(async (req, res) => {
   return res.status(200).json({ totalDisLikesCount: totalLikesCount });
 });
 
+// Define a rate per view for earnings calculation
+const EARNING_RATE_PER_VIEW = 0.01; // Example: $0.01 per view
+
+const getUserPostEarnings = asyncHandler(async (req, res) => {
+  const userId = req.user;
+
+  // Find all posts for the user
+  const userPosts = await Post.findAll({ where: { userId: userId } });
+
+  // If user has no posts, return 404
+  if (!userPosts || userPosts.length === 0) {
+    return res
+      .status(404)
+      .json({ message: "User not found or user has no posts" });
+  }
+
+  // Initialize total earnings and array to store each post's data
+  let totalEarnings = 0;
+  const postsData = [];
+
+  // Iterate over each post to count views and calculate earnings
+  for (const post of userPosts) {
+    // Find views count for current post
+    const postViewsCount = await PostViewer.count({
+      where: { postId: post.id },
+    });
+
+    // Calculate earnings for current post
+    const postEarnings = postViewsCount * EARNING_RATE_PER_VIEW;
+
+    // Add current post earnings to total earnings
+    totalEarnings += postEarnings;
+
+    // Add current post data to the array
+    postsData.push({
+      postId: post.id,
+      description: post.description,
+      viewsCount: postViewsCount,
+      earnings: postEarnings,
+    });
+  }
+
+  // Return the total earnings and each post's data
+  return res.status(200).json({ totalEarnings, posts: postsData });
+});
+
+const getAllUsersEarningsAndRankings = asyncHandler(async (req, res) => {
+  try {
+    // Find all users
+    const users = await User.findAll();
+
+    // Array to store user earnings and post count data
+    const usersData = [];
+
+    // Iterate over each user to calculate earnings, post count, and store data
+    for (const user of users) {
+      // Find all posts for the user
+      const userPosts = await Post.findAll({ where: { userId: user.id } });
+
+      // If user has no posts, skip to the next user
+      if (!userPosts || userPosts.length === 0) {
+        continue;
+      }
+
+      // Calculate total earnings for the user
+      let totalEarnings = 0;
+
+      // Iterate over each post to count views and calculate earnings
+      for (const post of userPosts) {
+        // Find views count for current post
+        const postViewsCount = await PostViewer.count({
+          where: { postId: post.id },
+        });
+
+        // Calculate earnings for current post
+        const postEarnings = postViewsCount * EARNING_RATE_PER_VIEW;
+
+        // Add current post earnings to total earnings
+        totalEarnings += postEarnings;
+      }
+
+      // Push user data to the array
+      usersData.push({
+        userId: user.id,
+        username: user.username, // Assuming you have a 'username' field in your User model
+        totalEarnings: totalEarnings,
+        totalPosts: userPosts.length, // Total post count for the user
+        profilePicture: user.profilePicture, // Assuming 'profilePicture' is the attribute name in the User model
+      });
+    }
+
+    // Sort users based on total earnings in descending order
+    usersData.sort((a, b) => b.totalEarnings - a.totalEarnings);
+
+    // Assign ranks to users
+    let rank = 1;
+    for (let i = 0; i < usersData.length; i++) {
+      if (
+        i > 0 &&
+        usersData[i].totalEarnings < usersData[i - 1].totalEarnings
+      ) {
+        rank = i + 1;
+      }
+      usersData[i].rank = rank;
+    }
+
+    // Respond with the ranked users and their earnings
+    res.json(usersData);
+  } catch (error) {
+    console.error("Error retrieving user earnings rankings:", error);
+    res.status(500).json({ error: "An internal server error occurred" });
+  }
+});
+
 module.exports = {
   createPost,
   fetchAllPosts,
@@ -449,4 +564,6 @@ module.exports = {
   getUserPostsCount,
   getUserPostLikes,
   getUserPostDisLikes,
+  getUserPostEarnings,
+  getAllUsersEarningsAndRankings,
 };

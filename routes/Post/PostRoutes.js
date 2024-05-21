@@ -58,4 +58,14 @@ PostRouter.get(
   isAuthenticated,
   PostController.getUserPostDisLikes
 );
+//getUserPostEarnings
+PostRouter.get(
+  "/get-user-post-earnings",
+  isAuthenticated,
+  PostController.getUserPostEarnings
+);
+PostRouter.get(
+  "/get-user-post-rankings",
+  PostController.getAllUsersEarningsAndRankings
+);
 module.exports = PostRouter;
