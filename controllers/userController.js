@@ -702,6 +702,35 @@ const getFollowingsCount = asyncHandler(async (req, res) => {
 //   }
 // };
 
+const userEarnings = async (req, res) => {
+  const userId = req.user;
+
+  try {
+    // Retrieve all posts belonging to the user
+    const userPosts = await Post.findAll({ where: { userId } });
+
+    if (!userPosts || userPosts.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "User not found or user has no posts" });
+    }
+
+    // Calculate total earnings
+    const totalEarnings = userPosts.reduce(
+      (accum, post) => accum + post.totalEarnings,
+      0
+    );
+
+    // Return total earnings
+    return res.status(200).json({ totalEarnings });
+  } catch (error) {
+    console.error("Error calculating total earnings:", error);
+    return res
+      .status(500)
+      .json({ message: "Error calculating total earnings" });
+  }
+};
+
 module.exports = {
   registerUserCtrl,
   login,
@@ -724,4 +753,5 @@ module.exports = {
   getFollowersCount,
   getFollowingsCount,
   // calculateEarnings,
+  userEarnings,
 };

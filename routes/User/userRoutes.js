@@ -66,5 +66,10 @@ UserRouter.get(
 //   isAuthenticated,
 //   userController.calculateEarnings
 // );
+UserRouter.get(
+  "/get-earning-dashboard",
+  isAuthenticated,
+  userController.userEarnings
+);
 
 module.exports = UserRouter;
