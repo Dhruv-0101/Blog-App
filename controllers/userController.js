@@ -1,6 +1,8 @@
 require("dotenv").config();
 const db = require("../models/index");
 const User = db.users;
+const Post = db.posts;
+const PostViewer = db.postviewers;
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const asyncHandler = require("express-async-handler");
@@ -533,6 +535,173 @@ const getFollowingsCount = asyncHandler(async (req, res) => {
   return res.status(200).json({ followersCount: followersCount });
 });
 
+// //for last day of the month
+// // const calculateEarnings = async (req, res) => {
+// //   const userId = req.user;
+
+// //   try {
+// //     // Get the start date of the current month and the last date of the current month
+// //     const currentMonthStart = new Date(
+// //       new Date().getFullYear(),
+// //       new Date().getMonth(),
+// //       1
+// //     );
+// //     const currentMonthEnd = new Date(
+// //       new Date().getFullYear(),
+// //       new Date().getMonth() + 1,
+// //       0 // Setting day to 0 gives the last day of the previous month, which is the last day of the current month
+// //     );
+
+// //     // Retrieve all posts belonging to the user
+// //     const posts = await Post.findAll({ where: { userId } });
+
+// //     // Initialize responseData for the report
+// //     const responseData = [];
+
+// //     // Iterate over each post
+// //     for (const post of posts) {
+// //       // Find all views for the post within the current month
+// //       const viewsThisMonth = await PostViewer.findAll({
+// //         where: {
+// //           postId: post.id,
+// //           createdAt: {
+// //             [Op.between]: [currentMonthStart, currentMonthEnd],
+// //           },
+// //         },
+// //       });
+
+// //       // Calculate the total views count for the current month
+// //       const viewsCount = viewsThisMonth.length;
+
+// //       // Calculate monthly earnings based on the views count
+// //       const earningPerView = 0.01; // Example earning rate
+// //       const monthlyEarnings = viewsCount * earningPerView;
+
+// //       // Update the post with the calculated earnings for the current month
+// //       await post.update({
+// //         thisMonthEarnings: monthlyEarnings,
+// //         viewsCount: post.viewsCount + viewsCount,
+// //         lastCalculatedViewsCount: viewsCount,
+// //       });
+
+// //       // Check if today is the last day of the month
+// //       const today = new Date();
+// //       if (today.getDate() === currentMonthEnd.getDate()) {
+// //         // Update the total earnings for the post if today is the last day of the month
+// //         await post.update({
+// //           totalEarnings: post.totalEarnings + monthlyEarnings,
+// //         });
+// //       }
+
+// //       // Get the total earnings for the post
+// //       const totalEarnings = post.totalEarnings;
+
+// //       // Collect data for the report
+// //       responseData.push({
+// //         postId: post.id,
+// //         totalViewsCount: viewsCount, // Total views count for the current month
+// //         monthlyEarnings,
+// //         totalEarnings, // Total earnings for the post
+// //       });
+
+// //       console.log(`Earnings calculated for post ID ${post.id}`);
+// //     }
+
+// //     console.log(`Earnings calculation completed for user ID: ${userId}`);
+
+// //     // Return the report as response, including total earnings for each post
+// //     return res.status(200).json({ data: responseData });
+// //   } catch (error) {
+// //     console.error("Error calculating earnings:", error);
+// //     return res.status(500).json({ message: "Error calculating earnings" });
+// //   }
+// // };
+// //for first day of the upcoming month
+// const calculateEarnings = async (req, res) => {
+//   const userId = req.user;
+
+//   try {
+//     // Get the start date of the current month and the first date of the upcoming month
+//     const currentMonthStart = new Date(
+//       new Date().getFullYear(),
+//       new Date().getMonth(),
+//       1
+//     );
+//     const upcomingMonthStart = new Date(
+//       new Date().getFullYear(),
+//       new Date().getMonth() + 1,
+//       1
+//     );
+
+//     // Retrieve all posts belonging to the user
+//     const posts = await Post.findAll({ where: { userId } });
+
+//     // Initialize responseData for the report
+//     const responseData = [];
+
+//     // Iterate over each post
+//     for (const post of posts) {
+//       // Find all views for the post within the current month
+//       const viewsThisMonth = await PostViewer.findAll({
+//         where: {
+//           postId: post.id,
+//           createdAt: {
+//             [Op.between]: [currentMonthStart, upcomingMonthStart],
+//           },
+//         },
+//       });
+
+//       // Calculate the total views count for the current month
+//       const viewsCount = viewsThisMonth.length;
+
+//       // Calculate monthly earnings based on the views count
+//       const earningPerView = 0.01; // Example earning rate
+//       const monthlyEarnings = viewsCount * earningPerView;
+
+//       // Update the post with the calculated earnings for the current month
+//       await post.update({
+//         thisMonthEarnings: monthlyEarnings,
+//         viewsCount: post.viewsCount + viewsCount,
+//         lastCalculatedViewsCount: viewsCount,
+//       });
+
+//       // Check if today is the first day of the upcoming month
+//       const today = new Date();
+//       if (
+//         today.getDate() === upcomingMonthStart.getDate() &&
+//         today.getMonth() === upcomingMonthStart.getMonth() &&
+//         today.getFullYear() === upcomingMonthStart.getFullYear()
+//       ) {
+//         // Update the total earnings for the post if today is the first day of the upcoming month
+//         await post.update({
+//           totalEarnings: post.totalEarnings + monthlyEarnings,
+//         });
+//       }
+
+//       // Get the total earnings for the post
+//       const totalEarnings = post.totalEarnings;
+
+//       // Collect data for the report
+//       responseData.push({
+//         postId: post.id,
+//         totalViewsCount: viewsCount, // Total views count for the current month
+//         monthlyEarnings,
+//         totalEarnings, // Total earnings for the post
+//       });
+
+//       console.log(`Earnings calculated for post ID ${post.id}`);
+//     }
+
+//     console.log(`Earnings calculation completed for user ID: ${userId}`);
+
+//     // Return the report as response, including total earnings for each post
+//     return res.status(200).json({ data: responseData });
+//   } catch (error) {
+//     console.error("Error calculating earnings:", error);
+//     return res.status(500).json({ message: "Error calculating earnings" });
+//   }
+// };
+
 module.exports = {
   registerUserCtrl,
   login,
@@ -554,4 +723,5 @@ module.exports = {
   getFollowingByUserId,
   getFollowersCount,
   getFollowingsCount,
+  // calculateEarnings,
 };

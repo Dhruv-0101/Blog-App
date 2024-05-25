@@ -61,5 +61,10 @@ UserRouter.get(
   isAuthenticated,
   userController.getFollowingsCount
 );
+// UserRouter.get(
+//   "/get-earning",
+//   isAuthenticated,
+//   userController.calculateEarnings
+// );
 
 module.exports = UserRouter;

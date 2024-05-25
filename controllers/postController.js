@@ -1,6 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const db = require("../models/index");
 const { Sequelize } = require("sequelize");
+const { Op } = require("sequelize"); // Import Op from sequelize
 
 const Post = db.posts;
 const Category = db.categories;
@@ -284,20 +285,113 @@ const GetDisLikeCount = asyncHandler(async (req, res) => {
   });
 });
 
+// const getUserPostsController = async (req, res) => {
+//   const userId = req.user;
+
+//   const userPosts = await Post.findAll({ where: { userId } });
+
+//   if (!userPosts || userPosts.length === 0) {
+//     return res
+//       .status(404)
+//       .json({ message: "User not found or user has no posts" });
+//   }
+
+//   return res.status(200).json({ userPosts });
+// };
+
 const getUserPostsController = async (req, res) => {
   const userId = req.user;
 
-  const userPosts = await Post.findAll({ where: { userId } });
+  try {
+    // Get the start date of the current month and the first date of the upcoming month
+    const currentMonthStart = new Date(
+      new Date().getFullYear(),
+      new Date().getMonth(),
+      1
+    );
+    const upcomingMonthStart = new Date(
+      new Date().getFullYear(),
+      new Date().getMonth() + 1,
+      1
+    );
 
-  if (!userPosts || userPosts.length === 0) {
-    return res
-      .status(404)
-      .json({ message: "User not found or user has no posts" });
+    // Retrieve all posts belonging to the user
+    const userPosts = await Post.findAll({ where: { userId } });
+
+    if (!userPosts || userPosts.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "User not found or user has no posts" });
+    }
+
+    // Initialize responseData for the report
+    const responseData = [];
+
+    // Iterate over each post
+    for (const post of userPosts) {
+      // Find all views for the post within the current month
+      const viewsThisMonth = await PostViewer.findAll({
+        where: {
+          postId: post.id,
+          createdAt: {
+            [Op.between]: [currentMonthStart, upcomingMonthStart],
+          },
+        },
+      });
+
+      // Calculate the total views count for the current month
+      const viewsCount = viewsThisMonth.length;
+
+      // Calculate monthly earnings based on the views count
+      const earningPerView = 0.01; // Example earning rate
+      const monthlyEarnings = viewsCount * earningPerView;
+
+      // Update the post with the calculated earnings for the current month
+      await post.update({
+        thisMonthEarnings: monthlyEarnings,
+        viewsCount: post.viewsCount + viewsCount,
+        lastCalculatedViewsCount: viewsCount,
+      });
+
+      // Check if today is the first day of the upcoming month
+      const today = new Date();
+      if (
+        today.getDate() === upcomingMonthStart.getDate() &&
+        today.getMonth() === upcomingMonthStart.getMonth() &&
+        today.getFullYear() === upcomingMonthStart.getFullYear()
+      ) {
+        // Update the total earnings for the post if today is the first day of the upcoming month
+        await post.update({
+          totalEarnings: post.totalEarnings + monthlyEarnings,
+        });
+      }
+
+      // Get the total earnings for the post
+      const totalEarnings = post.totalEarnings;
+
+      // Collect data for the report
+      responseData.push({
+        postId: post.id,
+        totalViewsCount: viewsCount, // Total views count for the current month
+        monthlyEarnings,
+        totalEarnings, // Total earnings for the post
+      });
+
+      console.log(`Earnings calculated for post ID ${post.id}`);
+    }
+
+    console.log(`Earnings calculation completed for user ID: ${userId}`);
+
+    // Return both user posts and the earnings report
+    return res.status(200).json({
+      userPosts, // Original user posts response
+      // earningsReport: responseData, // New earnings report
+    });
+  } catch (error) {
+    console.error("Error calculating earnings:", error);
+    return res.status(500).json({ message: "Error calculating earnings" });
   }
-
-  return res.status(200).json({ userPosts });
 };
-
 const getTotalPostViews = asyncHandler(async (req, res) => {
   const userId = req.user;
 
