@@ -685,6 +685,57 @@ const getAllUsersEarningsAndRankings = asyncHandler(async (req, res) => {
   }
 });
 
+// const fetchUserPostsWithCommentsCount = asyncHandler(async (req, res) => {
+//   const userId = req.user;
+//   // Fetch all posts of the user
+//   const userPosts = await Post.findAll({
+//     where: { userId },
+//   });
+
+//   // Create an array to store the posts with comment count
+//   const postsWithCommentsCount = [];
+
+//   // Iterate over each post to count comments and add to the array
+//   for (const post of userPosts) {
+//     // Count comments for each post
+//     const commentCount = await Comment.count({
+//       where: { postId: post.id },
+//     });
+
+//     // Add post with comment count to the array
+//     postsWithCommentsCount.push({
+//       post,
+//       commentCount,
+//     });
+//   }
+
+//   res.status(200).json({ userPosts: postsWithCommentsCount });
+// });
+const fetchUserPostsWithCommentsCount = asyncHandler(async (req, res) => {
+  const userId = req.user;
+
+  // Fetch all posts of the user
+  const userPosts = await Post.findAll({
+    where: { userId },
+  });
+
+  // Initialize total comment count
+  let totalCommentCount = 0;
+
+  // Iterate over each post to count comments and accumulate total count
+  for (const post of userPosts) {
+    // Count comments for each post
+    const commentCount = await Comment.count({
+      where: { postId: post.id },
+    });
+
+    // Accumulate comment counts
+    totalCommentCount += commentCount;
+  }
+
+  res.status(200).json({ totalCommentCount });
+});
+
 module.exports = {
   createPost,
   fetchAllPosts,
@@ -702,4 +753,5 @@ module.exports = {
   getUserPostEarnings,
   getAllUsersEarningsAndRankings,
   updatePostController,
+  fetchUserPostsWithCommentsCount,
 };

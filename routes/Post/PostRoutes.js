@@ -70,6 +70,12 @@ PostRouter.get(
   isAuthenticated,
   PostController.getUserPostEarnings
 );
+
+PostRouter.get(
+  "/get-user-post-comments",
+  isAuthenticated,
+  PostController.fetchUserPostsWithCommentsCount
+);
 PostRouter.get(
   "/get-user-post-rankings",
   PostController.getAllUsersEarningsAndRankings
