@@ -43,7 +43,10 @@ db.followunfollow = require("./Follow-Unfollow/Follow-Unfollow.js")(
   DataTypes
 );
 db.payments = require("./Payment/Payment.js")(sequelize, DataTypes);
-
+db.notifications = require("./Notification/Notification.js")(
+  sequelize,
+  DataTypes
+);
 db.sequelize.sync({ force: false }).then(() => {
   console.log("yes re-sync done!");
 });
@@ -117,5 +120,11 @@ db.payments.belongsTo(db.plans);
 
 db.users.hasMany(db.payments);
 db.payments.belongsTo(db.users);
+
+db.users.hasMany(db.notifications);
+db.notifications.belongsTo(db.users);
+
+db.posts.hasMany(db.notifications);
+db.notifications.belongsTo(db.posts);
 
 module.exports = db;

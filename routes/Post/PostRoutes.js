@@ -80,4 +80,14 @@ PostRouter.get(
   "/get-user-post-rankings",
   PostController.getAllUsersEarningsAndRankings
 );
+PostRouter.get(
+  "/get-user-notification",
+  isAuthenticated,
+  PostController.getNotificationsForUser
+);
+PostRouter.put(
+  "/update-user-notification/:notificationId",
+  isAuthenticated,
+  PostController.updateNotificationsForUser
+);
 module.exports = PostRouter;

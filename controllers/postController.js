@@ -2,6 +2,7 @@ const asyncHandler = require("express-async-handler");
 const db = require("../models/index");
 const { Sequelize } = require("sequelize");
 const { Op } = require("sequelize"); // Import Op from sequelize
+const sendNotification = require("../utils/sendNotification");
 
 const Post = db.posts;
 const Category = db.categories;
@@ -10,20 +11,88 @@ const PostViewers = db.postviewers;
 const Comment = db.comments;
 const LikeDisLike = db.likedislike;
 const PostViewer = db.postviewers;
+const Notification = db.notifications;
+const FolloUnFollow = db.followunfollow;
 
+// const createPost = asyncHandler(async (req, res) => {
+//   const { description, category } = req.body;
+
+//   // Find the category
+//   const categoryFound = await Category.findByPk(category);
+//   if (!categoryFound) {
+//     throw new Error("Category not found");
+//   }
+
+//   // Find the user
+//   const userFound = await User.findByPk(req.user);
+//   if (!userFound) {
+//     throw new Error("User not found");
+//   }
+
+//   // Create the post
+//   const postCreated = await Post.create({
+//     description,
+//     image: req?.file?.path,
+//     userId: req.user,
+//     categoryId: category,
+//   });
+
+//   if (categoryFound) {
+//     await categoryFound.update({ postId: postCreated.id });
+//   } else {
+//     throw new Error("Category not found");
+//   }
+//   // Find all follower entries from the followunfollow table where the userId matches the current user
+//   const followerEntries = await FolloUnFollow.findAll({
+//     where: { followerId: req.user },
+//   });
+//   console.log(followerEntries);
+//   // Extract follower IDs from the follower entries
+//   const followerIds = followerEntries.map((entry) => entry.userId);
+
+//   // Find all users who are followers
+//   const followers = await User.findAll({
+//     where: {
+//       id: followerIds,
+//     },
+//   });
+//   console.log(followers);
+
+//   // Send notifications to each follower
+//   for (const follower of followers) {
+//     const followerEmail = follower.email;
+//     await sendNotification(followerEmail, postCreated.id);
+//   }
+
+//   // Create a notification for the post creator
+//   await Notification.create({
+//     userId: req.user,
+//     postId: postCreated.id,
+//     message: `New post created by ${userFound.username}`,
+//   });
+
+//   res.json({
+//     status: "success",
+//     message: "Post created successfully and notifications sent to followers",
+//     postCreated,
+//   });
+// });
 const createPost = asyncHandler(async (req, res) => {
   const { description, category } = req.body;
 
+  // Find the category
   const categoryFound = await Category.findByPk(category);
   if (!categoryFound) {
     throw new Error("Category not found");
   }
 
+  // Find the user
   const userFound = await User.findByPk(req.user);
   if (!userFound) {
     throw new Error("User not found");
   }
 
+  // Create the post
   const postCreated = await Post.create({
     description,
     image: req?.file?.path,
@@ -37,16 +106,37 @@ const createPost = asyncHandler(async (req, res) => {
     throw new Error("Category not found");
   }
 
-  // Create notification
-  //   await Notification.create({
-  //     userId: req.user,
-  //     postId: postCreated.id,
-  //     message: `New post created by ${userFound.username}`,
-  //   });
+  // Find all follower entries from the followunfollow table where the followerId matches the current user
+  const followerEntries = await FolloUnFollow.findAll({
+    where: { followerId: req.user },
+  });
+
+  // Extract follower IDs from the follower entries
+  const followerIds = followerEntries.map((entry) => entry.userId);
+
+  // Find all users who are followers
+  const followers = await User.findAll({
+    where: {
+      id: followerIds,
+    },
+  });
+
+  // Send notifications to each follower and create a notification entry
+  for (const follower of followers) {
+    const followerEmail = follower.email;
+    await sendNotification(followerEmail, postCreated.id);
+
+    // Create a notification for each follower
+    await Notification.create({
+      userId: follower.id,
+      postId: postCreated.id,
+      message: `📢 New post created by ${userFound.username}. <a href="http://localhost:5173/posts/${postCreated.id}" target="_blank" style="color: blue; text-decoration: underline;">View post</a>`,
+    });
+  }
 
   res.json({
     status: "success",
-    message: "Post created successfully",
+    message: "Post created successfully and notifications sent to followers",
     postCreated,
   });
 });
@@ -736,6 +826,56 @@ const fetchUserPostsWithCommentsCount = asyncHandler(async (req, res) => {
   res.status(200).json({ totalCommentCount });
 });
 
+//for notifications
+const getNotificationsForUser = asyncHandler(async (req, res) => {
+  const userId = req.user;
+
+  // Find all notifications for the given userId
+  const notifications = await Notification.findAll({
+    where: { userId: userId, isRead: false },
+    order: [["createdAt", "DESC"]],
+  });
+
+  const unreadCount = await Notification.count({
+    where: { userId, isRead: false },
+  });
+
+  res.json({
+    status: "success",
+    unreadCount,
+    notifications,
+  });
+});
+
+const updateNotificationsForUser = asyncHandler(async (req, res) => {
+  const userId = req.user;
+  const notificationId = req.params.notificationId;
+
+  // Update the notifications to set isRead to true
+  const [updatedRows] = await Notification.update(
+    { isRead: true },
+    {
+      where: {
+        userId: userId,
+        id: notificationId,
+      },
+    }
+  );
+
+  if (updatedRows === 0) {
+    return res.status(404).json({
+      status: "failure",
+      message: "No notifications found to update",
+    });
+  }
+
+  res.json({
+    status: "success",
+    message: "Notifications updated successfully",
+    updatedRows,
+  });
+});
+
 module.exports = {
   createPost,
   fetchAllPosts,
@@ -754,4 +894,6 @@ module.exports = {
   getAllUsersEarningsAndRankings,
   updatePostController,
   fetchUserPostsWithCommentsCount,
+  getNotificationsForUser,
+  updateNotificationsForUser,
 };
