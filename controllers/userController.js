@@ -105,7 +105,7 @@ const googleAuthCallback = asyncHandler(async (req, res, next) => {
         });
 
         // Redirect the user to the dashboard
-        res.redirect("http://localhost:8080/dashboard");
+        res.redirect("http://localhost:5173/dashboard");
       } catch (error) {
         next(error);
       }
