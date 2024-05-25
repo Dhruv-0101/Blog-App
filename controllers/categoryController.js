@@ -1,6 +1,9 @@
 const asyncHandler = require("express-async-handler");
 const db = require("../models/index");
+const sequelize = db.sequelize; // Import sequelize from your Sequelize configuration
+
 const Category = db.categories;
+const Post = db.posts;
 
 const createCategory = asyncHandler(async (req, res) => {
   const { categoryName, description } = req.body;
@@ -84,6 +87,31 @@ const updateCategory = asyncHandler(async (req, res) => {
   });
 });
 
+const getCategoryPostCounts = asyncHandler(async (req, res) => {
+  try {
+    // Find all categories
+    const categories = await Category.findAll({
+      include: {
+        model: Post,
+        attributes: [], // We don't need any attributes from Post, just the count
+      },
+      attributes: {
+        include: [
+          [sequelize.fn("COUNT", sequelize.col("posts.id")), "postCount"],
+        ],
+      },
+      group: ["category.id"],
+    });
+
+    return res.status(200).json({ categories: categories });
+  } catch (error) {
+    console.error("Error fetching categories post counts:", error);
+    return res
+      .status(500)
+      .json({ message: "Error fetching categories post counts" });
+  }
+});
+
 module.exports = {
   createCategory,
   fetchAllCategories,
@@ -91,4 +119,5 @@ module.exports = {
   deleteCategory,
   deleteCategory,
   updateCategory,
+  getCategoryPostCounts,
 };

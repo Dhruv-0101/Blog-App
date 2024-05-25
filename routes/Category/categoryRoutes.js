@@ -28,4 +28,8 @@ CategoryRouter.put(
   isAuthenticated,
   categoryController.updateCategory
 );
+CategoryRouter.get(
+  "/get-category-post",
+  categoryController.getCategoryPostCounts
+);
 module.exports = CategoryRouter;
