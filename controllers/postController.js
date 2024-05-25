@@ -154,6 +154,47 @@ const getPost = asyncHandler(async (req, res) => {
   }
 });
 
+const updatePostController = asyncHandler(async (req, res) => {
+  const postId = req.params.postId;
+  const { description, category } = req.body;
+
+  // Check if the post exists and belongs to the user
+  const post = await Post.findOne({ where: { id: postId, userId: req.user } });
+  if (!post) {
+    res.status(404);
+    throw new Error(
+      "Post not found or user not authorized to update this post"
+    );
+  }
+
+  // If a category is provided, check if it exists
+  if (category) {
+    const categoryFound = await Category.findByPk(category);
+    if (!categoryFound) {
+      res.status(404);
+      throw new Error("Category not found");
+    }
+    post.categoryId = category;
+  }
+
+  // Update only the image and description fields
+  if (req?.file?.path) {
+    post.image = req.file.path;
+  }
+  if (description) {
+    post.description = description;
+  }
+
+  // Save the updated post
+  await post.save();
+
+  res.json({
+    status: "success",
+    message: "Post updated successfully",
+    post,
+  });
+});
+
 const deletePost = asyncHandler(async (req, res) => {
   const postId = req.params.postId;
 
@@ -660,4 +701,5 @@ module.exports = {
   getUserPostDisLikes,
   getUserPostEarnings,
   getAllUsersEarningsAndRankings,
+  updatePostController,
 };

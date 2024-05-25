@@ -20,6 +20,12 @@ PostRouter.get(
   isAuthenticated,
   PostController.getPost
 );
+PostRouter.put(
+  "/update-single-post/:postId",
+  isAuthenticated,
+  postimageupload.single("image"),
+  PostController.updatePostController
+);
 PostRouter.delete(
   "/delete-single-post/:postId",
   isAuthenticated,
