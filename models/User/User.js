@@ -66,6 +66,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
       },
+      isAdmin: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
     },
     {
       timestamps: true,
