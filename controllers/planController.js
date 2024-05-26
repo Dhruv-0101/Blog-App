@@ -144,9 +144,25 @@ const verifyPaymentController = asyncHandler(async (req, res) => {
   }
 });
 
+const updateUserFreePlan = asyncHandler(async (req, res) => {
+  const user = await User.findByPk(req.user);
+  if (!user) {
+    return res.status(404).json({ status: false, message: "User not found" });
+  }
+
+  user.hasSelectedPlan = true;
+  await user.save();
+
+  res.json({
+    status: true,
+    message: "Payment verified, user updated",
+  });
+});
+
 module.exports = {
   createPlan,
   listPlans,
   createPaymentController,
   verifyPaymentController,
+  updateUserFreePlan
 };

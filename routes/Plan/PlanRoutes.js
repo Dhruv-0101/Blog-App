@@ -15,5 +15,10 @@ PlanRouter.post(
   isAuthenticated,
   planController.verifyPaymentController
 );
+PlanRouter.post(
+  "/free-plan",
+  isAuthenticated,
+  planController.updateUserFreePlan
+);
 
 module.exports = PlanRouter;
