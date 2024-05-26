@@ -3,7 +3,7 @@ module.exports = (sequelize, DataTypes) => {
     "post",
     {
       description: {
-        type: DataTypes.STRING,
+        type: DataTypes.TEXT, 
         allowNull: false,
         trim: true,
       },
