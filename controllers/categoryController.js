@@ -97,7 +97,7 @@ const getCategoryPostCounts = asyncHandler(async (req, res) => {
       },
       attributes: {
         include: [
-          [sequelize.fn("COUNT", sequelize.col("posts.id")), "postCount"],
+          [sequelize.fn("COUNT", sequelize.col("posts.id")), "postCount"], //for not by me
         ],
       },
       group: ["category.id"],
