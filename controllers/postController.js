@@ -14,69 +14,6 @@ const PostViewer = db.postviewers;
 const Notification = db.notifications;
 const FolloUnFollow = db.followunfollow;
 
-// const createPost = asyncHandler(async (req, res) => {
-//   const { description, category } = req.body;
-
-//   // Find the category
-//   const categoryFound = await Category.findByPk(category);
-//   if (!categoryFound) {
-//     throw new Error("Category not found");
-//   }
-
-//   // Find the user
-//   const userFound = await User.findByPk(req.user);
-//   if (!userFound) {
-//     throw new Error("User not found");
-//   }
-
-//   // Create the post
-//   const postCreated = await Post.create({
-//     description,
-//     image: req?.file?.path,
-//     userId: req.user,
-//     categoryId: category,
-//   });
-
-//   if (categoryFound) {
-//     await categoryFound.update({ postId: postCreated.id });
-//   } else {
-//     throw new Error("Category not found");
-//   }
-//   // Find all follower entries from the followunfollow table where the userId matches the current user
-//   const followerEntries = await FolloUnFollow.findAll({
-//     where: { followerId: req.user },
-//   });
-//   console.log(followerEntries);
-//   // Extract follower IDs from the follower entries
-//   const followerIds = followerEntries.map((entry) => entry.userId);
-
-//   // Find all users who are followers
-//   const followers = await User.findAll({
-//     where: {
-//       id: followerIds,
-//     },
-//   });
-//   console.log(followers);
-
-//   // Send notifications to each follower
-//   for (const follower of followers) {
-//     const followerEmail = follower.email;
-//     await sendNotification(followerEmail, postCreated.id);
-//   }
-
-//   // Create a notification for the post creator
-//   await Notification.create({
-//     userId: req.user,
-//     postId: postCreated.id,
-//     message: `New post created by ${userFound.username}`,
-//   });
-
-//   res.json({
-//     status: "success",
-//     message: "Post created successfully and notifications sent to followers",
-//     postCreated,
-//   });
-// });
 const createPost = asyncHandler(async (req, res) => {
   const { description, category } = req.body;
 
@@ -567,39 +504,6 @@ const getUserPostsCount = asyncHandler(async (req, res) => {
   return res.status(200).json({ postsCount });
 });
 
-// const getUserPostLikes = asyncHandler(async (req, res) => {
-//   const userId = req.user;
-
-//   // Find all posts for the user
-//   const userPosts = await Post.findAll({ where: { userId: userId } });
-
-//   // If user has no posts, return 404
-//   if (!userPosts || userPosts.length === 0) {
-//     return res
-//       .status(404)
-//       .json({ message: "User not found or user has no posts" });
-//   }
-
-//   // Initialize an array to store likes count for each post
-//   const postsWithLikeCount = [];
-
-//   // Iterate over each post to count likes
-//   for (const post of userPosts) {
-//     // Find likes count for current post where liked is true
-//     const postLikesCount = await LikeDisLike.count({
-//       where: { postId: post.id, liked: true },
-//     });
-
-//     // Add the post and its like count to the array
-//     postsWithLikeCount.push({
-//       postId: post.id,
-//       likesCount: postLikesCount,
-//     });
-//   }
-
-//   // Return the array of posts with like counts
-//   return res.status(200).json({ posts: postsWithLikeCount });
-// });
 const getUserPostLikes = asyncHandler(async (req, res) => {
   const userId = req.user;
 
@@ -661,7 +565,6 @@ const getUserPostDisLikes = asyncHandler(async (req, res) => {
   return res.status(200).json({ totalDisLikesCount: totalLikesCount });
 });
 
-// Define a rate per view for earnings calculation
 const EARNING_RATE_PER_VIEW = 0.01; // Example: $0.01 per view
 
 const getUserPostEarnings = asyncHandler(async (req, res) => {
@@ -775,32 +678,6 @@ const getAllUsersEarningsAndRankings = asyncHandler(async (req, res) => {
   }
 });
 
-// const fetchUserPostsWithCommentsCount = asyncHandler(async (req, res) => {
-//   const userId = req.user;
-//   // Fetch all posts of the user
-//   const userPosts = await Post.findAll({
-//     where: { userId },
-//   });
-
-//   // Create an array to store the posts with comment count
-//   const postsWithCommentsCount = [];
-
-//   // Iterate over each post to count comments and add to the array
-//   for (const post of userPosts) {
-//     // Count comments for each post
-//     const commentCount = await Comment.count({
-//       where: { postId: post.id },
-//     });
-
-//     // Add post with comment count to the array
-//     postsWithCommentsCount.push({
-//       post,
-//       commentCount,
-//     });
-//   }
-
-//   res.status(200).json({ userPosts: postsWithCommentsCount });
-// });
 const fetchUserPostsWithCommentsCount = asyncHandler(async (req, res) => {
   const userId = req.user;
 
