@@ -440,41 +440,6 @@ const updateEmail = asyncHandler(async (req, res) => {
   });
 });
 
-// const GetFollowers = async (req, res) => {
-//   const userId = req.user; // Assuming userId is passed as a route parameter
-//   try {
-//     const matchingRecords = await FollowUnfollow.findAll({
-//       where: {
-//         followerId: userId,
-//       },
-//     });
-
-//     // Extract userIds from matchingRecords
-//     const userIds = matchingRecords.map((record) => record.userId);
-//     console.log(userIds);
-
-//     // Fetch user data for each userId
-//     const users = await User.findAll({
-//       where: {
-//         id: userIds,
-//       },
-//       attributes: ["id", "username"], // Specify the attributes you want to include
-//     });
-
-//     // // Map user data to matchingRecords
-//     // const recordsWithUserData = matchingRecords.map((record) => {
-//     //   const user = users.find((user) => user.id === record.userId);
-//     //   return {
-//     //     ...record.toJSON(),
-//     //     user: user ? { id: user.id, username: user.username } : null, // Include user data or null if user not found
-//     //   };
-//     // });
-
-//     res.status(200).json({ matchingRecords: users });
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// };
 const GetFollowers = async (req, res) => {
   const userId = req.user;
 
