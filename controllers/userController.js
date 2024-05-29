@@ -10,6 +10,17 @@ const crypto = require("crypto");
 const passport = require("passport");
 const FollowUnfollow = db.followunfollow;
 const { Op } = require("sequelize"); // Import Op from sequelize
+const cbor = require("cbor"); // Add this line
+
+//-------------------for two-step authentication---------------------//
+const Challenge = db.challenges;
+const {
+  generateRegistrationOptions,
+  verifyRegistrationResponse,
+  generateAuthenticationOptions,
+  verifyAuthenticationResponse,
+} = require("@simplewebauthn/server");
+//-------------------for two-step authentication---------------------//
 
 const sendAccVerificationEmail = require("../utils/sendAccVerificationEmail");
 const sendPasswordEmail = require("../utils/sendPasswordEmail");
@@ -696,6 +707,446 @@ const userEarnings = async (req, res) => {
   }
 };
 
+//-----------------------for single passkey two step authentication----------------------//
+
+// const registerUserPasskeyCtrl = asyncHandler(async (req, res) => {
+//   const userId = req.user;
+
+//   // Check if user exists
+//   const user = await User.findByPk(userId);
+//   if (!user) {
+//     return res.status(404).json({ error: "user not found!" });
+//   }
+
+//   // Generate the registration options
+//   const challengePayload = await generateRegistrationOptions({
+//     rpID: "localhost",
+//     rpName: "My Localhost Machine",
+//     attestationType: "none",
+//     userName: user.username,
+//     timeout: 30_000,
+//   });
+
+//   // Store the challenge in the database
+//   await Challenge.create({
+//     userId,
+//     challenge: challengePayload.challenge,
+//   });
+
+//   return res.json({ options: challengePayload });
+// });
+
+// const registerPasskeyVerifyCtrl = asyncHandler(async (req, res) => {
+//   const userId = req.user;
+//   const { cred } = req.body;
+
+//   // Retrieve the user from the database
+//   const userFound = await User.findOne({ where: { id: userId } });
+//   if (!userFound) {
+//     throw new Error("User Not Found");
+//   }
+
+//   // Retrieve the challenge from the database
+//   const challenge = await Challenge.findOne({ where: { userId: userId } });
+//   if (!challenge) {
+//     throw new Error("Challenge not found");
+//   }
+
+//   // Verify the registration response using the retrieved challenge
+//   const verificationResult = await verifyRegistrationResponse({
+//     expectedChallenge: challenge.challenge,
+//     expectedOrigin: "http://localhost:5173",
+//     expectedRPID: "localhost",
+//     response: cred,
+//   });
+
+//   if (!verificationResult.verified) {
+//     return res.json({ error: "could not verify" });
+//   }
+
+//   // Store the verification result (passkey) in the database
+//   await Challenge.update(
+//     {
+//       passkey: {
+//         ...verificationResult.registrationInfo,
+//         credentialPublicKey: Buffer.from(
+//           verificationResult.registrationInfo.credentialPublicKey
+//         ).toString("base64"), // Convert Buffer to Base64 string
+//       },
+//     },
+//     { where: { userId: userId } }
+//   );
+
+//   res.json({ verified: true });
+// });
+
+// const loginUserPassKey = asyncHandler(async (req, res) => {
+//   const userId = req.user;
+
+//   // Check if user exists
+//   const user = await User.findByPk(userId);
+//   if (!user) {
+//     return res.status(404).json({ error: "user not found!" });
+//   }
+
+//   const opts = await generateAuthenticationOptions({
+//     rpID: "localhost",
+//   });
+
+//   // Store the challenge in the database
+//   await Challenge.create({
+//     userId,
+//     challenge: opts.challenge,
+//     loginpasskey: true,
+//   });
+
+//   return res.json({ options: opts });
+// });
+
+// const loginPassKeyVerifyCtrl = asyncHandler(async (req, res) => {
+//   const userId = req.user;
+//   const { cred } = req.body;
+
+//   // Retrieve the user from the database
+//   const user = await User.findByPk(userId);
+//   if (!user) return res.status(404).json({ error: "User not found!" });
+
+//   // Retrieve the challenge record for the user
+//   const challenge = await Challenge.findOne({
+//     where: { userId: userId, loginpasskey: true },
+//   });
+//   if (!challenge)
+//     return res.status(404).json({ error: "Challenge data not found!" });
+
+//   // Retrieve the stored passkey from the challengepasskey object
+//   const challengepasskey = await Challenge.findOne({
+//     where: { userId: userId, loginpasskey: false },
+//   });
+//   if (!challengepasskey)
+//     return res.status(404).json({ error: "Passkey data not found!" });
+
+//   const passkey = challengepasskey.dataValues.passkey;
+
+//   // Convert credentialPublicKey from Base64 string back to Buffer
+//   passkey.credentialPublicKey = Buffer.from(
+//     passkey.credentialPublicKey,
+//     "base64"
+//   );
+
+//   // Verify the authentication response using the authenticator
+//   const result = await verifyAuthenticationResponse({
+//     expectedChallenge: challenge.challenge,
+//     expectedOrigin: "http://localhost:5173",
+//     expectedRPID: "localhost",
+//     response: cred,
+//     authenticator: {
+//       credentialID: passkey.credentialID,
+//       credentialPublicKey: passkey.credentialPublicKey,
+//       counter: passkey.counter,
+//     },
+//   });
+
+//   console.log("result---------", result);
+
+//   // Handle verification result
+//   if (!result.verified) {
+//     return res.json({ error: "Authentication verification failed" });
+//   } else {
+//     await Challenge.destroy({ where: { userId: userId, loginpasskey: true } });
+
+//     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
+//       expiresIn: "3d",
+//     });
+
+//     // Set the token into the cookie
+//     res.cookie("token", token, {
+//       httpOnly: true,
+//       secure: false,
+//       sameSite: "strict",
+//       maxAge: 24 * 60 * 60 * 1000, // 1 day
+//     });
+
+//     res.json({ success: true });
+//   }
+// });
+
+//-----------------------for single passkey two step authentication----------------------//
+
+
+
+//-----------------------for multiple passkey two step authentication---------------------//
+
+const registerUserPasskeyCtrl = asyncHandler(async (req, res) => {
+  const userId = req.user;
+
+  // Check if user exists
+  const user = await User.findByPk(userId);
+  if (!user) {
+    return res.status(404).json({ error: "User not found!" });
+  }
+
+  // Generate the registration options
+  const challengePayload = await generateRegistrationOptions({
+    rpID: "localhost",
+    rpName: "My Localhost Machine",
+    attestationType: "none",
+    userName: user.username,
+    timeout: 30_000,
+  });
+
+  // Store the challenge in the database
+  await Challenge.create({
+    userId,
+    challenge: challengePayload.challenge,
+    loginpasskey: false,
+  });
+
+  return res.json({ options: challengePayload });
+});
+
+const registerPasskeyVerifyCtrl = asyncHandler(async (req, res) => {
+  const userId = req.user;
+  const { cred } = req.body;
+
+  // Retrieve the user from the database
+  const userFound = await User.findOne({ where: { id: userId } });
+  if (!userFound) {
+    throw new Error("User not found");
+  }
+
+  // Retrieve the challenge from the database
+  const challenge = await Challenge.findOne({
+    where: { userId: userId, loginpasskey: false },
+    order: [["createdAt", "DESC"]], // Get the most recent challenge
+  });
+  if (!challenge) {
+    throw new Error("Challenge not found");
+  }
+
+  // Verify the registration response using the retrieved challenge
+  const verificationResult = await verifyRegistrationResponse({
+    expectedChallenge: challenge.challenge,
+    expectedOrigin: "http://localhost:5173",
+    expectedRPID: "localhost",
+    response: cred,
+  });
+
+  if (!verificationResult.verified) {
+    return res.json({ error: "Could not verify" });
+  }
+
+  // Update the challenge entry with the passkey data
+  await Challenge.update(
+    {
+      passkey: {
+        ...verificationResult.registrationInfo,
+        credentialPublicKey: Buffer.from(
+          verificationResult.registrationInfo.credentialPublicKey
+        ).toString("base64"), // Convert Buffer to Base64 string
+      },
+    },
+    { where: { id: challenge.id } }
+  );
+
+  res.json({ verified: true });
+});
+
+//-------------------------based on userid two step authenticaion-------------------------//
+// const loginUserPassKey = asyncHandler(async (req, res) => {
+//   const userId = req.user;
+
+//   // Check if user exists
+//   const user = await User.findByPk(userId);
+//   if (!user) {
+//     return res.status(404).json({ error: "User not found!" });
+//   }
+
+//   const opts = await generateAuthenticationOptions({
+//     rpID: "localhost",
+//   });
+
+//   // Store the challenge in the database
+//   await Challenge.create({
+//     userId,
+//     challenge: opts.challenge,
+//     loginpasskey: true,
+//   });
+
+//   return res.json({ options: opts });
+// });
+
+// const loginPassKeyVerifyCtrl = asyncHandler(async (req, res) => {
+//   const userId = req.user;
+//   const { cred } = req.body;
+
+//   // Retrieve the user from the database
+//   const user = await User.findByPk(userId);
+//   if (!user) return res.status(404).json({ error: "User not found!" });
+
+//   // Retrieve the challenge record for the user
+//   const challenge = await Challenge.findOne({
+//     where: { userId: userId, loginpasskey: true },
+//   });
+//   if (!challenge)
+//     return res.status(404).json({ error: "Challenge data not found!" });
+
+//   // Retrieve all stored passkeys for the user
+//   const passkeys = await Challenge.findAll({
+//     where: { userId: userId, loginpasskey: false },
+//   });
+//   if (!passkeys || passkeys.length === 0)
+//     return res.status(404).json({ error: "Passkey data not found!" });
+
+//   let verified = false;
+
+//   for (const challengepasskey of passkeys) {
+//     const passkey = challengepasskey.dataValues.passkey;
+//     passkey.credentialPublicKey = Buffer.from(
+//       passkey.credentialPublicKey,
+//       "base64"
+//     );
+
+//     const result = await verifyAuthenticationResponse({
+//       expectedChallenge: challenge.challenge,
+//       expectedOrigin: "http://localhost:5173",
+//       expectedRPID: "localhost",
+//       response: cred,
+//       authenticator: {
+//         credentialID: passkey.credentialID,
+//         credentialPublicKey: passkey.credentialPublicKey,
+//         counter: passkey.counter,
+//       },
+//     });
+
+//     if (result.verified) {
+//       verified = true;
+//       break;
+//     }
+//   }
+
+//   if (!verified) {
+//     return res.json({ error: "Authentication verification failed" });
+//   } else {
+//     await Challenge.destroy({
+//       where: { userId: userId, loginpasskey: true, id: challenge.id },
+//     });
+
+//     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
+//       expiresIn: "3d",
+//     });
+
+//     res.cookie("token", token, {
+//       httpOnly: true,
+//       secure: false,
+//       sameSite: "strict",
+//       maxAge: 24 * 60 * 60 * 1000, // 1 day
+//     });
+
+//     res.json({ success: true });
+//   }
+// });
+//-------------------------based on userid two step authenticaion-------------------------//
+
+const loginUserPassKey = asyncHandler(async (req, res) => {
+  const { username } = req.body;
+
+  // Find the user based on the username
+  const user = await User.findOne({ where: { username } });
+  if (!user) {
+    return res.status(404).json({ error: "User not found!" });
+  }
+
+  const opts = await generateAuthenticationOptions({
+    rpID: "localhost",
+  });
+
+  // Store the challenge in the database
+  await Challenge.create({
+    userId: user.id,
+    challenge: opts.challenge,
+    loginpasskey: true,
+  });
+
+  return res.json({ options: opts });
+});
+
+const loginPassKeyVerifyCtrl = asyncHandler(async (req, res) => {
+  const { username, cred } = req.body;
+
+  // Find the user based on the username
+  const user = await User.findOne({ where: { username } });
+  if (!user) {
+    return res.status(404).json({ error: "User not found!" });
+  }
+
+  // Retrieve the challenge record for the user
+  const challenge = await Challenge.findOne({
+    where: { userId: user.id, loginpasskey: true },
+  });
+  if (!challenge) {
+    return res.status(404).json({ error: "Challenge data not found!" });
+  }
+
+  // Retrieve all stored passkeys for the user
+  const passkeys = await Challenge.findAll({
+    where: { userId: user.id, loginpasskey: false },
+  });
+  if (!passkeys || passkeys.length === 0) {
+    return res.status(404).json({ error: "Passkey data not found!" });
+  }
+
+  let verified = false;
+
+  for (const challengepasskey of passkeys) {
+    const passkey = challengepasskey.dataValues.passkey;
+    passkey.credentialPublicKey = Buffer.from(
+      passkey.credentialPublicKey,
+      "base64"
+    );
+
+    const result = await verifyAuthenticationResponse({
+      expectedChallenge: challenge.challenge,
+      expectedOrigin: "http://localhost:5173",
+      expectedRPID: "localhost",
+      response: cred,
+      authenticator: {
+        credentialID: passkey.credentialID,
+        credentialPublicKey: passkey.credentialPublicKey,
+        counter: passkey.counter,
+      },
+    });
+
+    if (result.verified) {
+      verified = true;
+      break;
+    }
+  }
+
+  if (!verified) {
+    return res.json({ error: "Authentication verification failed" });
+  } else {
+    await Challenge.destroy({
+      where: { userId: user.id, loginpasskey: true, id: challenge.id },
+    });
+
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
+      expiresIn: "3d",
+    });
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "strict",
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
+
+    res.json({ success: true });
+  }
+});
+
+//-----------------------for multiple passkey two step authentication---------------------//
+
+
 module.exports = {
   registerUserCtrl,
   login,
@@ -719,4 +1170,8 @@ module.exports = {
   getFollowingsCount,
   // calculateEarnings,
   userEarnings,
+  registerUserPasskeyCtrl,
+  registerPasskeyVerifyCtrl,
+  loginUserPassKey,
+  loginPassKeyVerifyCtrl,
 };

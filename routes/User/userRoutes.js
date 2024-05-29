@@ -72,4 +72,27 @@ UserRouter.get(
   userController.userEarnings
 );
 
+//-------------------for two-step authentication---------------------//
+
+UserRouter.post(
+  "/register-passkey",
+  isAuthenticated,
+  userController.registerUserPasskeyCtrl
+);
+UserRouter.post(
+  "/register-passkey-verify",
+  isAuthenticated,
+  userController.registerPasskeyVerifyCtrl
+);
+UserRouter.post(
+  "/login-passkey",
+  // isAuthenticated,
+  userController.loginUserPassKey
+);
+UserRouter.post(
+  "/login-passkey-verify",
+  // isAuthenticated,
+  userController.loginPassKeyVerifyCtrl
+);
+
 module.exports = UserRouter;

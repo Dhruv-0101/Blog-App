@@ -13,6 +13,15 @@ const PlanRouter = require("./routes/Plan/PlanRoutes");
 const passport = require("./config/passport-config");
 const bodyParser = require("body-parser");
 
+//-------------------for two-step authentication---------------------//
+
+const crypto = require("node:crypto");
+if (!globalThis.crypto) {
+  globalThis.crypto = crypto;
+}
+
+//-------------------for two-step authentication---------------------//
+
 const app = express();
 
 // middleware

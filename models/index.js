@@ -47,6 +47,12 @@ db.notifications = require("./Notification/Notification.js")(
   sequelize,
   DataTypes
 );
+//-------------------for two-step authentication---------------------//
+
+db.challenges = require("./Challenge/Challenge.js")(sequelize, DataTypes);
+
+//-------------------for two-step authentication---------------------//
+
 db.sequelize.sync({ force: false }).then(() => {
   console.log("yes re-sync done!");
 });
@@ -126,5 +132,12 @@ db.notifications.belongsTo(db.users);
 
 db.posts.hasMany(db.notifications);
 db.notifications.belongsTo(db.posts);
+
+//-------------------for two-step authentication---------------------//
+
+db.users.hasMany(db.challenges);
+db.challenges.belongsTo(db.users);
+
+//-------------------for two-step authentication---------------------//
 
 module.exports = db;
