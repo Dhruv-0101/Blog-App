@@ -7,6 +7,7 @@ const Post = db.posts;
 
 const createCategory = asyncHandler(async (req, res) => {
   const { categoryName, description } = req.body;
+  console.log(req.body);
 
   const categoryFound = await Category.findOne({
     where: { categoryName },
