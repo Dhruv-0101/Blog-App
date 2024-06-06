@@ -28,7 +28,7 @@ const app = express();
 // app.use(cors());
 app.use(
   cors({
-    origin: "http://shipsaga.com",
+    origin: "*",
     credentials: true,
   })
 );
