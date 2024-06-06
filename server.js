@@ -2,6 +2,8 @@ require("dotenv").config();
 const cors = require("cors");
 
 const express = require("express");
+var secure = require('express-force-https');
+
 const cookieParser = require("cookie-parser");
 
 const { globalErrhandler, notFound } = require("./middleware/globalErrhandler");
@@ -32,6 +34,8 @@ app.use(
     credentials: true,
   })
 );
+
+app.use(secure);
 
 app.use(express.json());
 app.use(bodyParser.json());
