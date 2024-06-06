@@ -2,7 +2,6 @@ require("dotenv").config();
 const cors = require("cors");
 
 const express = require("express");
-const secure = require('express-force-https');
 
 const cookieParser = require("cookie-parser");
 
@@ -25,7 +24,6 @@ if (!globalThis.crypto) {
 //-------------------for two-step authentication---------------------//
 
 const app = express();
-app.use(secure);
 
 
 // middleware
